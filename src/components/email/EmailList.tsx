@@ -43,46 +43,41 @@ export function EmailList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background border-r border-border w-full max-w-md">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="text-lg font-semibold text-foreground">
-          {folderTitles[currentFolder]}
-        </h2>
+    <div className="flex flex-col h-full bg-background border-r border-border w-72">
+      {/* Header with search */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <form onSubmit={handleSearch} className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={`Search ${folderTitles[currentFolder].toLowerCase()}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-7 h-8 text-sm bg-muted/50 border-0 focus-visible:ring-1"
+            />
+          </div>
+        </form>
         <Button
           variant="ghost"
           size="icon"
           onClick={onRefresh}
           disabled={isLoading}
-          className="text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
         </Button>
       </div>
-
-      {/* Search */}
-      <form onSubmit={handleSearch} className="p-3 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search emails..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-muted/50 border-0 focus-visible:ring-1"
-          />
-        </div>
-      </form>
 
       {/* Email List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="flex items-center justify-center h-20">
+            <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         ) : threads.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-            <p className="text-sm">No emails in {folderTitles[currentFolder].toLowerCase()}</p>
+          <div className="flex items-center justify-center h-20 text-muted-foreground">
+            <p className="text-xs">No emails</p>
           </div>
         ) : (
           threads.map((thread) => (
