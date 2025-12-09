@@ -1,17 +1,20 @@
-import { Mail } from 'lucide-react';
+import { Inbox } from 'lucide-react';
 
 export function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-muted/20 text-center p-8">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-        <Mail className="h-8 w-8 text-muted-foreground" />
-      </div>
+    <div className="flex-1 flex flex-col items-center justify-center bg-background text-center p-8">
+      <Inbox className="h-12 w-12 text-muted-foreground/30 mb-4" strokeWidth={1} />
       <h3 className="text-lg font-medium text-foreground mb-2">
-        Select an email to read
+        Inbox Zero
       </h3>
-      <p className="text-sm text-muted-foreground max-w-sm">
-        Choose an email from the list on the left to view its contents and continue the conversation.
+      <p className="text-sm text-muted-foreground max-w-xs mb-6">
+        You've processed all your emails. Time to focus on what matters.
       </p>
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span><span className="kbd">C</span> Compose</span>
+        <span><span className="kbd">G I</span> Inbox</span>
+        <span><span className="kbd">?</span> Help</span>
+      </div>
     </div>
   );
 }

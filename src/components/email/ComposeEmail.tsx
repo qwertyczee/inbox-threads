@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Send, X, Paperclip, Minimize2, Maximize2 } from 'lucide-react';
+import { X, Minus, Send, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ComposeEmailProps {
@@ -23,19 +16,16 @@ export function ComposeEmail({ isOpen, onClose, onSend }: ComposeEmailProps) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isSending, setIsSending] = useState(false);
 
-  const handleSend = async () => {
-    if (!to.trim() || !subject.trim() || !body.trim()) return;
-    
-    setIsSending(true);
-    await onSend({ to, subject, body });
-    setIsSending(false);
-    
-    // Reset form
-    setTo('');
-    setSubject('');
-    setBody('');
+  if (!isOpen) return null;
+
+  const handleSend = () => {
+    if (to && body) {
+      onSend({ to, subject, body });
+      setTo('');
+      setSubject('');
+      setBody('');
+    }
   };
 
   const handleClose = () => {
@@ -46,125 +36,106 @@ export function ComposeEmail({ isOpen, onClose, onSend }: ComposeEmailProps) {
     onClose();
   };
 
-  if (!isOpen) return null;
-
-  if (isMinimized) {
-    return (
-      <div className="fixed bottom-0 right-6 z-50 animate-slide-in">
-        <div
-          className="bg-card border border-border rounded-t-lg shadow-lg w-72 cursor-pointer"
-          onClick={() => setIsMinimized(false)}
-        >
-          <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground rounded-t-lg">
-            <span className="font-medium text-sm truncate">
-              {subject || 'New Message'}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMinimized(false);
-                }}
-              >
-                <Maximize2 className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 text-primary-foreground hover:bg-primary-foreground/20"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClose();
-                }}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] p-0 gap-0">
-        <DialogHeader className="px-4 py-3 border-b border-border bg-muted/30">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-base font-medium">New Message</DialogTitle>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground"
-                onClick={() => setIsMinimized(true)}
-              >
-                <Minimize2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div className="p-4 space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Label htmlFor="to" className="w-16 text-sm text-muted-foreground">
-                To
-              </Label>
-              <Input
-                id="to"
-                type="email"
-                placeholder="recipient@example.com"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="flex-1 border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <Label htmlFor="subject" className="w-16 text-sm text-muted-foreground">
-                Subject
-              </Label>
-              <Input
-                id="subject"
-                placeholder="Subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="flex-1 border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
-              />
-            </div>
-          </div>
-
-          <Textarea
-            placeholder="Compose your email..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            className="min-h-[200px] resize-none border-0 focus-visible:ring-0 p-0"
-          />
-        </div>
-
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
-          <div className="flex items-center gap-2">
+    <div
+      className={cn(
+        'fixed bg-card border border-border shadow-2xl z-50 flex flex-col transition-all duration-200',
+        isMinimized
+          ? 'bottom-0 right-4 w-72 h-12 rounded-t-lg'
+          : 'bottom-4 right-4 w-[560px] rounded-lg'
+      )}
+    >
+      {/* Header */}
+      <div
+        className={cn(
+          'flex items-center justify-between px-4 bg-muted/50 border-b border-border cursor-pointer',
+          isMinimized ? 'py-3 rounded-t-lg' : 'py-2.5'
+        )}
+        onClick={() => isMinimized && setIsMinimized(false)}
+      >
+        <span className="text-sm font-medium text-foreground">
+          {subject || 'New Message'}
+        </span>
+        <div className="flex items-center gap-1">
+          {!isMinimized && (
             <Button
-              onClick={handleSend}
-              disabled={!to.trim() || !subject.trim() || !body.trim() || isSending}
-              className="gap-2"
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMinimized(true)}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
             >
-              <Send className="h-4 w-4" />
-              {isSending ? 'Sending...' : 'Send'}
+              <Minus className="h-4 w-4" />
             </Button>
-          </div>
+          )}
+          {isMinimized && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(false);
+              }}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground"
+            onClick={handleClose}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
           >
-            <Paperclip className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+
+      {/* Body */}
+      {!isMinimized && (
+        <div className="flex flex-col flex-1 p-4 gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground w-12">To</span>
+            <Input
+              type="email"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              placeholder="recipient@example.com"
+              className="flex-1 h-8 bg-transparent border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground w-12">Subject</span>
+            <Input
+              type="text"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="Subject"
+              className="flex-1 h-8 bg-transparent border-0 border-b border-border rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary"
+            />
+          </div>
+          <Textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Write your message..."
+            className="flex-1 min-h-[200px] resize-none bg-transparent border-0 px-0 focus-visible:ring-0 text-sm"
+          />
+          <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="text-xs text-muted-foreground">
+              <span className="kbd">⌘</span> + <span className="kbd">Enter</span> to send
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!to || !body}
+              size="sm"
+              className="gap-2 h-8"
+            >
+              <Send className="h-3.5 w-3.5" />
+              Send
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

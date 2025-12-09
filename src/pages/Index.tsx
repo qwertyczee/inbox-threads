@@ -215,11 +215,20 @@ const Index = () => {
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      {/* Email List - hidden when thread is selected */}
-      {!selectedThread && (
+      {/* Main content */}
+      {selectedThread ? (
+        <EmailThreadView
+          thread={selectedThread}
+          onBack={() => setSelectedThread(null)}
+          onToggleStar={() => handleToggleStar(selectedThread.id)}
+          onDelete={handleDelete}
+          onArchive={handleArchive}
+          onReply={handleReply}
+        />
+      ) : (
         <EmailList
           threads={threads}
-          selectedThreadId={selectedThread?.id || null}
+          selectedThreadId={null}
           onSelectThread={handleSelectThread}
           onToggleStar={handleToggleStar}
           currentFolder={currentFolder}
@@ -228,22 +237,6 @@ const Index = () => {
           onSearch={handleSearch}
         />
       )}
-
-      {/* Email Thread View or Empty State */}
-      <div className="flex-1 flex">
-        {selectedThread ? (
-          <EmailThreadView
-            thread={selectedThread}
-            onBack={() => setSelectedThread(null)}
-            onToggleStar={() => handleToggleStar(selectedThread.id)}
-            onDelete={handleDelete}
-            onArchive={handleArchive}
-            onReply={handleReply}
-          />
-        ) : (
-          <EmptyState />
-        )}
-      </div>
 
       {/* Compose Modal */}
       <ComposeEmail
