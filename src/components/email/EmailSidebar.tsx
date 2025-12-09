@@ -9,8 +9,7 @@ import {
   File, 
   AlertCircle, 
   Trash2, 
-  Plus,
-  Menu
+  PenSquare,
 } from 'lucide-react';
 
 const iconMap = {
@@ -20,6 +19,15 @@ const iconMap = {
   File,
   AlertCircle,
   Trash2,
+};
+
+const shortcuts: Record<FolderType, string> = {
+  inbox: 'G I',
+  starred: 'G S',
+  sent: 'G T',
+  drafts: 'G D',
+  spam: 'G !',
+  trash: 'G #',
 };
 
 interface EmailSidebarProps {
@@ -37,43 +45,40 @@ export function EmailSidebar({
   folderCounts,
   onCompose,
   isCollapsed = false,
-  onToggleCollapse,
 }: EmailSidebarProps) {
   return (
     <aside
       className={cn(
-        'flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-200',
-        isCollapsed ? 'w-16' : 'w-64'
+        'flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-150',
+        isCollapsed ? 'w-14' : 'w-56'
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+      {/* Logo */}
+      <div className="flex items-center gap-2 px-4 py-5">
         {!isCollapsed && (
-          <h1 className="text-xl font-semibold text-foreground">Mail</h1>
+          <span className="text-base font-semibold tracking-tight text-foreground">
+            Supermail
+          </span>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
       </div>
 
-      <div className="p-3">
+      {/* Compose button */}
+      <div className="px-3 pb-4">
         <Button
           onClick={onCompose}
           className={cn(
-            'w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md',
+            'w-full gap-2 h-9 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm',
             isCollapsed && 'px-0'
           )}
         >
-          <Plus className="h-5 w-5" />
+          <PenSquare className="h-4 w-4" />
           {!isCollapsed && <span>Compose</span>}
+          {!isCollapsed && <span className="kbd ml-auto">C</span>}
         </Button>
       </div>
 
-      <nav className="flex-1 px-2 py-2 space-y-1">
+      {/* Folders */}
+      <nav className="flex-1 px-2 space-y-0.5">
         {folders.map((folder) => {
           const Icon = iconMap[folder.icon as keyof typeof iconMap];
           const count = folderCounts[folder.id];
@@ -84,29 +89,27 @@ export function EmailSidebar({
               key={folder.id}
               onClick={() => onFolderChange(folder.id)}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'group w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors',
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  ? 'bg-email-selected text-foreground'
+                  : 'text-muted-foreground hover:bg-email-hover hover:text-foreground',
                 isCollapsed && 'justify-center px-2'
               )}
             >
-              <Icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-primary')} />
+              <Icon className={cn('h-4 w-4 flex-shrink-0', isActive && 'text-primary')} />
               {!isCollapsed && (
                 <>
-                  <span className="flex-1 text-left">{folder.name}</span>
+                  <span className="flex-1 text-left font-medium">{folder.name}</span>
                   {count > 0 && (
-                    <span
-                      className={cn(
-                        'text-xs font-semibold px-2 py-0.5 rounded-full',
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
-                      )}
-                    >
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {count}
                     </span>
                   )}
+                  <span className="kbd opacity-0 group-hover:opacity-100 transition-opacity text-[9px]">
+                    {shortcuts[folder.id].split(' ').map((k, i) => (
+                      <span key={i}>{k}</span>
+                    ))}
+                  </span>
                 </>
               )}
             </button>
@@ -114,13 +117,12 @@ export function EmailSidebar({
         })}
       </nav>
 
+      {/* Footer */}
       {!isCollapsed && (
         <div className="p-4 border-t border-sidebar-border">
-          <p className="text-xs text-muted-foreground">
-            Storage: 2.4 GB of 15 GB used
-          </p>
-          <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className="h-full w-[16%] bg-primary rounded-full" />
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="kbd">?</span>
+            <span>Keyboard shortcuts</span>
           </div>
         </div>
       )}
