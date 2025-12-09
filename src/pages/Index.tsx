@@ -215,17 +215,19 @@ const Index = () => {
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      {/* Email List */}
-      <EmailList
-        threads={threads}
-        selectedThreadId={selectedThread?.id || null}
-        onSelectThread={handleSelectThread}
-        onToggleStar={handleToggleStar}
-        currentFolder={currentFolder}
-        isLoading={isLoading}
-        onRefresh={fetchData}
-        onSearch={handleSearch}
-      />
+      {/* Email List - hidden when thread is selected */}
+      {!selectedThread && (
+        <EmailList
+          threads={threads}
+          selectedThreadId={selectedThread?.id || null}
+          onSelectThread={handleSelectThread}
+          onToggleStar={handleToggleStar}
+          currentFolder={currentFolder}
+          isLoading={isLoading}
+          onRefresh={fetchData}
+          onSearch={handleSearch}
+        />
+      )}
 
       {/* Email Thread View or Empty State */}
       <div className="flex-1 flex">
