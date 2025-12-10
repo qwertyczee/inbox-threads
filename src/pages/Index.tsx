@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { EmailSidebar } from '@/components/email/EmailSidebar';
 import { EmailList } from '@/components/email/EmailList';
 import { EmailThreadView } from '@/components/email/EmailThread';
@@ -15,11 +15,13 @@ import {
   searchThreads,
 } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts';
 
 const Index = () => {
   const [currentFolder, setCurrentFolder] = useState<FolderType>('inbox');
   const [threads, setThreads] = useState<EmailThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<EmailThread | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [folderCounts, setFolderCounts] = useState<Record<FolderType, number>>({
     inbox: 0,
     sent: 0,
@@ -31,6 +33,9 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isReplying, setIsReplying] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const replyInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Fetch threads and counts
   const fetchData = useCallback(async () => {
@@ -57,18 +62,27 @@ const Index = () => {
     fetchData();
   }, [fetchData]);
 
+  // Reset selected index when threads change
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [threads]);
+
   // Handle folder change
   const handleFolderChange = (folder: FolderType) => {
     setCurrentFolder(folder);
     setSelectedThread(null);
+    setSelectedIndex(0);
   };
 
   // Handle thread selection
   const handleSelectThread = async (thread: EmailThread) => {
     setSelectedThread(thread);
+    setIsReplying(false);
+    const index = threads.findIndex((t) => t.id === thread.id);
+    if (index !== -1) setSelectedIndex(index);
+    
     if (thread.unreadCount > 0) {
       await markThreadAsRead(thread.id);
-      // Update local state
       setThreads((prev) =>
         prev.map((t) =>
           t.id === thread.id
@@ -122,8 +136,11 @@ const Index = () => {
     }
   };
 
-  // Handle archive (for demo, we'll just show a toast)
+  // Handle archive
   const handleArchive = async () => {
+    if (!selectedThread) return;
+    setThreads((prev) => prev.filter((t) => t.id !== selectedThread.id));
+    setSelectedThread(null);
     toast({
       title: 'Archived',
       description: 'Email has been archived',
@@ -144,11 +161,11 @@ const Index = () => {
         replyToThreadId: selectedThread.id,
       });
       
-      // Refresh the thread
       const updatedThreads = await getThreads(currentFolder);
       setThreads(updatedThreads);
       const updated = updatedThreads.find((t) => t.id === selectedThread.id);
       if (updated) setSelectedThread(updated);
+      setIsReplying(false);
       
       toast({
         title: 'Reply sent',
@@ -203,6 +220,45 @@ const Index = () => {
     }
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNavigateNext: () => {
+      if (selectedThread) return;
+      setSelectedIndex((prev) => Math.min(prev + 1, threads.length - 1));
+    },
+    onNavigatePrev: () => {
+      if (selectedThread) return;
+      setSelectedIndex((prev) => Math.max(prev - 1, 0));
+    },
+    onCompose: () => setIsComposeOpen(true),
+    onReply: () => {
+      if (selectedThread) {
+        setIsReplying(true);
+        setTimeout(() => replyInputRef.current?.focus(), 100);
+      }
+    },
+    onArchive: handleArchive,
+    onDelete: handleDelete,
+    onEscape: () => {
+      if (isComposeOpen) {
+        setIsComposeOpen(false);
+      } else if (isReplying) {
+        setIsReplying(false);
+      } else if (selectedThread) {
+        setSelectedThread(null);
+      }
+    },
+    onOpenThread: () => {
+      if (threads[selectedIndex]) {
+        handleSelectThread(threads[selectedIndex]);
+      }
+    },
+    onGoToInbox: () => handleFolderChange('inbox'),
+    onSearch: () => searchInputRef.current?.focus(),
+    isComposeOpen,
+    hasSelectedThread: !!selectedThread,
+  });
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Sidebar */}
@@ -224,6 +280,9 @@ const Index = () => {
           onDelete={handleDelete}
           onArchive={handleArchive}
           onReply={handleReply}
+          isReplying={isReplying}
+          onToggleReply={() => setIsReplying(!isReplying)}
+          replyInputRef={replyInputRef}
         />
       ) : (
         <EmailList
@@ -235,6 +294,8 @@ const Index = () => {
           isLoading={isLoading}
           onRefresh={fetchData}
           onSearch={handleSearch}
+          selectedIndex={selectedIndex}
+          searchInputRef={searchInputRef}
         />
       )}
 

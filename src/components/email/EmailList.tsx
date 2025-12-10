@@ -2,9 +2,9 @@ import { EmailThread, FolderType } from '@/types/email';
 import { EmailListItem } from './EmailListItem';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
-import { useState } from 'react';
+import { useState, RefObject, useEffect, useRef } from 'react';
 
-interface EmailListProps {
+export interface EmailListProps {
   threads: EmailThread[];
   selectedThreadId: string | null;
   onSelectThread: (thread: EmailThread) => void;
@@ -13,6 +13,8 @@ interface EmailListProps {
   isLoading?: boolean;
   onRefresh?: () => void;
   onSearch?: (query: string) => void;
+  selectedIndex?: number;
+  searchInputRef?: RefObject<HTMLInputElement>;
 }
 
 const folderTitles: Record<FolderType, string> = {
@@ -32,8 +34,21 @@ export function EmailList({
   currentFolder,
   isLoading,
   onSearch,
+  selectedIndex = 0,
+  searchInputRef,
 }: EmailListProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Scroll selected item into view
+  useEffect(() => {
+    if (itemRefs.current[selectedIndex]) {
+      itemRefs.current[selectedIndex]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [selectedIndex]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +66,7 @@ export function EmailList({
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               type="search"
               placeholder="Search..."
               value={searchQuery}
@@ -82,10 +98,14 @@ export function EmailList({
         ) : (
           <div className="divide-y divide-border/50">
             {threads.map((thread, index) => (
-              <div key={thread.id} className="relative group">
+              <div 
+                key={thread.id} 
+                ref={(el) => (itemRefs.current[index] = el)}
+                className="relative group"
+              >
                 <EmailListItem
                   thread={thread}
-                  isSelected={selectedThreadId === thread.id}
+                  isSelected={selectedThreadId === thread.id || index === selectedIndex}
                   onSelect={() => onSelectThread(thread)}
                   onToggleStar={(e) => {
                     e.stopPropagation();

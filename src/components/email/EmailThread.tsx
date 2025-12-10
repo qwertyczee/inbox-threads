@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, RefObject } from 'react';
 import { EmailThread as EmailThreadType } from '@/types/email';
 import { EmailMessage } from './EmailMessage';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,16 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface EmailThreadViewProps {
+export interface EmailThreadViewProps {
   thread: EmailThreadType;
   onBack: () => void;
   onToggleStar: () => void;
   onDelete: () => void;
   onArchive: () => void;
   onReply: (body: string) => void;
+  isReplying?: boolean;
+  onToggleReply?: () => void;
+  replyInputRef?: RefObject<HTMLTextAreaElement>;
 }
 
 export function EmailThreadView({
@@ -30,12 +33,31 @@ export function EmailThreadView({
   onDelete,
   onArchive,
   onReply,
+  isReplying: externalIsReplying,
+  onToggleReply,
+  replyInputRef,
 }: EmailThreadViewProps) {
   const [expandedEmails, setExpandedEmails] = useState<Set<string>>(
     new Set([thread.emails[thread.emails.length - 1]?.id])
   );
-  const [isReplying, setIsReplying] = useState(false);
+  const [internalIsReplying, setInternalIsReplying] = useState(false);
   const [replyBody, setReplyBody] = useState('');
+
+  const isReplying = externalIsReplying ?? internalIsReplying;
+  
+  const handleToggleReply = (value?: boolean) => {
+    if (onToggleReply) {
+      onToggleReply();
+    } else {
+      setInternalIsReplying(value ?? !internalIsReplying);
+    }
+  };
+
+  useEffect(() => {
+    if (isReplying && replyInputRef?.current) {
+      replyInputRef.current.focus();
+    }
+  }, [isReplying, replyInputRef]);
 
   const toggleEmailExpand = (emailId: string) => {
     setExpandedEmails((prev) => {
@@ -53,7 +75,8 @@ export function EmailThreadView({
     if (replyBody.trim()) {
       onReply(replyBody);
       setReplyBody('');
-      setIsReplying(false);
+      if (onToggleReply) onToggleReply();
+      else setInternalIsReplying(false);
     }
   };
 
@@ -128,13 +151,14 @@ export function EmailThreadView({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsReplying(false)}
+                onClick={() => handleToggleReply(false)}
                 className="h-7 w-7 text-muted-foreground"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <Textarea
+              ref={replyInputRef}
               placeholder="Write your reply..."
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
@@ -149,7 +173,7 @@ export function EmailThreadView({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsReplying(false)}
+                  onClick={() => handleToggleReply(false)}
                   className="h-8"
                 >
                   Cancel
@@ -169,7 +193,7 @@ export function EmailThreadView({
         ) : (
           <Button
             variant="outline"
-            onClick={() => setIsReplying(true)}
+            onClick={() => handleToggleReply(true)}
             className="gap-2 mt-4 h-9 border-dashed border-muted-foreground/30 text-muted-foreground hover:text-foreground hover:border-muted-foreground/50"
           >
             <Reply className="h-4 w-4" />
